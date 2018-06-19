@@ -359,6 +359,39 @@ describe("A promise handler with a predicate filter", function() {
     });
 });
 
+const myFunc = async function myFunc() {
+    throw new CustomError();
+};
+
+describe("async thrown", function () {
+    specify("no filter", function (done) {
+        myFunc()
+            .then(() => done('should not be here'))
+            .catch((e) => {
+                const val = e instanceof CustomError;
+                assert.ok(val, 'Error is not of type CustomError');
+                done();
+            });
+    });
+
+    specify("with filter", function (done) {
+        myFunc()
+            .then(() => done('should not be here')) // ✔
+            .catch(CustomError, function () {
+                // this should get called, but doesn't ✘
+                done();
+            })
+            .catch((e) => {
+                // this shouldn't get called and doesn't. ✔
+                done('should not be in the generic catch.');
+            })
+            .then(() => {
+                // not clear to me why we get here. ✘
+                done('why would this get called since filtered didn\'t');
+            });
+    });
+});
+
 describe("object property predicates", function() {
     specify("matches 1 property loosely", function() {
         var e = new Error();
